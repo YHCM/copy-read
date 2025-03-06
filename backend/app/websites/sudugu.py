@@ -31,15 +31,6 @@ class SuDuGu(Site):
         return self.domain
 
     async def search(self, keyword: str) -> list[BookInfo]:
-        """
-        www.sudugu.com 的搜索 api
-
-        Args:
-            keyword (str): 搜索关键字
-
-        Returns:
-            list[BookInfo]: 搜索结果
-        """
         results = []
 
         # 更新请求头，将 Referer 更新为搜索页面
@@ -56,11 +47,18 @@ class SuDuGu(Site):
             name_results = selector.xpath(
                 '//div[@class="item"]/div/h3/a/text()'
             ).getall()
+            author_results = selector.xpath(
+                '//div[@class="item"]/div/p[2]/a/text()'
+            ).getall()
 
-            for url, name in zip(url_results, name_results):
+            for url, name, author in zip(url_results, name_results, author_results):
                 full_url = f"https://www.sudugu.com{url}"
+                book_author = author.strip().split("：")[1] if "：" in author else ""
                 book_info = BookInfo(
-                    book_domain=self.domain, book_url=full_url, book_name=name
+                    book_domain=self.domain,
+                    book_url=full_url,
+                    book_name=name,
+                    book_author=book_author,
                 )
                 results.append(book_info)
 

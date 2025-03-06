@@ -2,7 +2,7 @@
 from sqlmodel import Field, SQLModel
 
 
-# 存储搜索的结果，方便之后搜索
+# 存储搜索的结果，方便之后本地搜索，提升速度
 class BookInfo(SQLModel, table=True):
     __tablename__ = "book_info"  # type: ignore
 
@@ -11,3 +11,4 @@ class BookInfo(SQLModel, table=True):
     book_domain: str
     book_url: str
     book_name: str
+    book_author: str

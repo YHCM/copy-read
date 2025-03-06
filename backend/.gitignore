@@ -11,3 +11,6 @@ wheels/
 
 # data
 database.db
+
+# http test
+requests.http

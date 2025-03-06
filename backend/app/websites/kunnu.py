@@ -30,15 +30,6 @@ class KunNu(Site):
         return self.domain
 
     async def search(self, keyword: str) -> list[BookInfo]:
-        """
-        www.kunnu.com 的搜索 api
-
-        Args:
-            keyword (str): 搜索关键字
-
-        Returns:
-            list[BookInfo]: 搜索结果
-        """
         results = []
 
         response = await self.client.get(f"https://www.kunnu.com/?s={keyword}")
@@ -52,8 +43,13 @@ class KunNu(Site):
             ).getall()
 
             for url, name in zip(url_results, name_results):
+                author = await self.__get_author(url)
+
                 book_info = BookInfo(
-                    book_domain=self.domain, book_url=url, book_name=name
+                    book_domain=self.domain,
+                    book_url=url,
+                    book_name=name,
+                    book_author=author,
                 )
                 results.append(book_info)
 
@@ -62,3 +58,20 @@ class KunNu(Site):
             pass
 
         return results
+
+    async def __get_author(self, book_url) -> str:
+        response = await self.client.get(book_url)
+
+        author = ""
+
+        if response.status_code == 200:
+            selector = Selector(response.text)
+            text = selector.xpath('//div[@class="book-describe"]/p[1]/text()').get()
+
+            if text:
+                author = text.strip().split("：")[1] if "：" in text else ""
+        else:
+            # 异常处理，以后做
+            pass
+
+        return author
