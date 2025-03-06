@@ -2,6 +2,7 @@ import httpx
 from parsel import Selector
 
 from app.models import BookInfo
+from app.schemas import ChapterInfo
 from app.websites.site import Site
 
 
@@ -67,3 +68,37 @@ class SuDuGu(Site):
             pass
 
         return results
+
+    async def get_chapter_info(self, book_url: str) -> list[ChapterInfo]:
+        results = []
+
+        # 更新请求头，将 Referer 更新为搜索页面
+        search_referer = {"Referer": "https://www.sudugu.com/"}
+        self.headers.update(search_referer)
+        response = await self.client.get(book_url)
+
+        if response.status_code == 200:
+            selector = Selector(response.text)
+            chapters = selector.xpath('//div[@id="list"]/ul/li')
+
+            for index, chapter in enumerate(chapters, start=1):
+                url = chapter.xpath("./a/@href").get(default="")
+                title = chapter.xpath("./a/text()").get(default="")
+                full_url = f"https://www.sudugu.com{url}"
+                chapter_info = ChapterInfo(
+                    chapter_id=index, chapter_url=full_url, chapter_title=title
+                )
+                results.append(chapter_info)
+        else:
+            pass
+
+        return results
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    sudugu = SuDuGu()
+
+    chapters = asyncio.run(sudugu.get_chapter_info("https://www.sudugu.com/1637/"))
+    print(chapters)

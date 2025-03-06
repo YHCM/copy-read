@@ -2,6 +2,7 @@ import httpx
 from parsel import Selector
 
 from app.models import BookInfo
+from app.schemas import ChapterInfo
 from app.websites.site import Site
 
 
@@ -24,7 +25,7 @@ class KunNu(Site):
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0",
         }
-        self.client = httpx.AsyncClient(headers=self.headers)
+        self.client = httpx.AsyncClient(headers=self.headers, timeout=None)
 
     def get_domain(self) -> str:
         return self.domain
@@ -59,6 +60,42 @@ class KunNu(Site):
 
         return results
 
+    async def get_chapter_info(self, book_url: str) -> list[ChapterInfo]:
+        results = []
+
+        response = await self.client.get(book_url)
+
+        if response.status_code == 200:
+            selector = Selector(response.text)
+            chapters = selector.xpath('//div[@class="book-list clearfix"]/ul/li')
+
+            for index, chapter in enumerate(chapters, start=1):
+                chapter_info = None
+
+                # 处理 <a> 标签形式
+                a_tag = chapter.xpath("./a")
+                if a_tag:
+                    title = a_tag.xpath("./text()").get(default="")
+                    url = a_tag.xpath("./@href").get(default="")
+                    chapter_info = ChapterInfo(
+                        chapter_id=index, chapter_url=url, chapter_title=title
+                    )
+
+                # 处理 <b> 标签形式
+                b_tag = chapter.xpath("./b")
+                if b_tag:
+                    title = b_tag.xpath("./text()").get(default="")
+                    url = b_tag.xpath("./@onclick").re(r"window\.open\('(.*?)'\)")[0]
+                    chapter_info = ChapterInfo(
+                        chapter_id=index, chapter_url=url, chapter_title=title
+                    )
+
+                results.append(chapter_info)
+        else:
+            pass
+
+        return results
+
     async def __get_author(self, book_url) -> str:
         response = await self.client.get(book_url)
 
@@ -75,3 +112,15 @@ class KunNu(Site):
             pass
 
         return author
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    kunnu = KunNu()
+
+    chapters = asyncio.run(
+        kunnu.get_chapter_info("https://www.kunnu.com/xusanguanmaixueji/")
+    )
+
+    print(chapters)
