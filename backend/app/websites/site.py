@@ -1,10 +1,9 @@
 from typing import Protocol
 
-from app.models import BookInfo
-from app.schemas import ChapterInfo
+from app.schemas import TempBook, TempChapter
 
 
-# 接口类
+# 协议类
 class Site(Protocol):
     def get_domain(self) -> str:
         """
@@ -15,26 +14,38 @@ class Site(Protocol):
         """
         ...
 
-    async def search(self, keyword: str) -> list[BookInfo]:
+    def search(self, keyword: str) -> list[TempBook]:
         """
-        对应域名的搜索 api
+        对应网站的搜索 api
 
         Args:
             keyword (str): 搜索关键字
 
         Returns:
-            list[BookInfo]: 搜索结果
+            list[TempBookInfo]: 搜索结果
         """
         ...
 
-    async def get_chapter_info(self, book_url: str) -> list[ChapterInfo]:
+    def get_chapters(self, book_url: str) -> list[TempChapter]:
         """
-        对应域名获取对应小说的章节信息
+        获取对应域名对应小说的章节信息
 
         Args:
-            book_url (str): 需要获取信息的小说链接
+            book_url (str): 需要获取章节信息的小说链接
 
         Returns:
-            list[ChapterInfo]: 获取的结果
+            list[Chapter]: 章节信息列表
+        """
+        ...
+
+    def get_content(self, chapter_url: str) -> str:
+        """
+        获取对应域名对应章节的内容
+
+        Args:
+            chapter_url (str): 需要获取内容的章节链接
+
+        Returns:
+            str: 章节内容
         """
         ...

@@ -23,4 +23,16 @@ def get_site_instance(domain: str) -> Site:
     if site_class:
         return site_class()
     else:
-        raise ValueError(f"No class found for domain: {domain}")
+        raise ValueError(f"no class found for domain: {domain}")
+
+
+def get_site_instances() -> list[Site]:
+    """
+    获取所有启用域名的实例对象列表
+
+    Returns:
+        list[Site]: 所有启用域名的对象列表
+    """
+    enable_domain = ["www.kunnu.com", "www.sudugu.com"]
+
+    return [get_site_instance(domain) for domain in enable_domain]
